@@ -54,8 +54,8 @@ def leer_excel_costes(ruta_excel='datos/ventas_grupos_productos_costes.xlsx'):
     return df
 
 # Función para simular la demanda de cada grupo de productos
-# en cada mes del año, devolviendo tres escenarios distintos
-def simular_demanda_grupos(num_sims=1000):
+# en cada mes del año
+def simular_demanda_grupos(num_sims=1000000):
     """
     Simula la demanda (en porcentaje) de cada grupo de productos en cada mes del año, utilizando
     distribuciones uniformes que parten del nivel de demanda establecido en el Excel.
@@ -64,82 +64,53 @@ def simular_demanda_grupos(num_sims=1000):
     - num_sims: número de simulaciones a realizar para cada grupo en cada mes.
     
     Devuelve:
-    - demanda_grupos_base: un DataFrame con la demanda simulada de cada grupo en
-    cada mes, partiendo de un escenario de base entorno al nivel de demanda establecido.
-    - demanda_grupos_pos: un DataFrame con la demanda simulada de cada grupo en cada
-    mes, partiendo de un escenario positivo respecto al nivel de demanda establecido.
-    - demanda_grupos_neg: un DataFrame con la demanda simulada de cada grupo en cada
-    mes, partiendo de un escenario negativo respecto al nivel de demanda establecido.
+    - demanda_grupos: un DataFrame con la demanda simulada de cada grupo en
+    cada mes, partiendo del nivel de demanda establecido en el documento de Excel,
+    y con el número de simulaciones establecido.
     """
     df_grupos = leer_excel_grupos()
     meses = df_grupos.columns
     grupos = df_grupos.index
 
     # Calcular el peso de cada grupo en la demanda total
-    fraccion_grupos = pd.DataFrame(0, index=grupos, columns=meses)
-    for grupo in grupos:
-        for mes in meses:
-            fraccion_grupos.loc[grupo, mes] =  df_grupos.loc[grupo, mes] / df_grupos[mes].sum()
+    fraccion_grupos = df_grupos.div(df_grupos.sum(axis=0), axis=1)
     
-    demanda_grupos_base = pd.DataFrame(0, index=grupos, columns=meses)
-    demanda_grupos_pos = pd.DataFrame(0, index=grupos, columns=meses)
-    demanda_grupos_neg = pd.DataFrame(0, index=grupos, columns=meses)
-    for grupo in grupos:
-        for mes in meses:
-            nivel_demanda = fraccion_grupos.loc[grupo, mes]
+    # Construir un DataFrame de simulaciones
+    demanda_grupos = pd.DataFrame({(grupo, mes): np.random.uniform(low=fraccion_grupos.loc[grupo, mes]*0.5,
+                                    high=fraccion_grupos.loc[grupo, mes]*1.5,
+                                    size=num_sims) for grupo in grupos for mes in meses})
             
-            demanda_grupos_base.loc[grupo, mes] = np.random.uniform(low=nivel_demanda*0.7, high=nivel_demanda*1.3, size=num_sims).mean()
-            demanda_grupos_pos.loc[grupo, mes] = np.random.uniform(low=nivel_demanda, high=nivel_demanda*1.4, size=num_sims).mean()
-            demanda_grupos_neg.loc[grupo, mes] = np.random.uniform(low=nivel_demanda*0.6, high=nivel_demanda, size=num_sims).mean()
-            
-    return demanda_grupos_base, demanda_grupos_pos, demanda_grupos_neg
+    return demanda_grupos
 
 # Función para simular la demanda de cada producto
-# en cada mes del año, devolviendo tres escenarios distintos
-def simular_demanda_productos(num_sims=1000):
+# en cada mes del año
+def simular_demanda_productos(num_sims=1000000):
     """
-    Simula la demanda (en porcentaje) de cada producto en cada mes del año, utilizando
-    los datos del nivel de demanda de cada grupo, y de cada producto dentro de su grupo.
+    Simula la demanda (en porcentaje) de cada producto en cada mes del año.
     
-    Parámetros:
+     Parámetros:
     - num_sims: número de simulaciones a realizar para cada producto en cada mes.
     
     Devuelve:
-    - demanda_productos_base: un DataFrame con la demanda simulada de cada producto en
-    cada mes, partiendo de un escenario de base entorno al nivel de demanda establecido.
-    - demanda_productos_pos: un DataFrame con la demanda simulada de cada producto en cada
-    mes, partiendo de un escenario positivo respecto al nivel de demanda establecido.
-    - demanda_productos_neg: un DataFrame con la demanda simulada de cada producto en cada
-    mes, partiendo de un escenario negativo respecto al nivel de demanda establecido.
+    - demanda_productos: un DataFrame con la demanda simulada de cada producto en
+    cada mes, partiendo del nivel de demanda establecido en el documento de Excel,
+    y con el número de simulaciones establecido.
     """
     df_productos = leer_excel_productos()
     meses = leer_excel_grupos().columns
     productos = df_productos.index
     grupos = df_productos['grupo'].unique()
 
-    # Calcular la demanda de cada grupo, en cada escenario
-    demanda_grupos_base, demanda_grupos_pos, demanda_grupos_neg = simular_demanda_grupos()
+    # Obtener la demanda de cada grupo
+    demanda_grupos = simular_demanda_grupos(num_sims=num_sims)
 
-    # Calcular el peso de cada producto dentro de su grupo
-    df_productos['fraccion'] = df_productos.groupby('grupo')['nivel_demanda_dentro_de_grupo'].transform(lambda x: x / x.sum())
+    # Sacar el peso de cada producto dentro de su grupo
+    df_productos['fraccion'] = (df_productos.groupby('grupo')['nivel_demanda_dentro_de_grupo'].transform(lambda x: x / x.sum()))
 
-    demanda_productos_base = pd.DataFrame(0, index=productos, columns=meses)
-    demanda_productos_pos  = pd.DataFrame(0, index=productos, columns=meses)
-    demanda_productos_neg  = pd.DataFrame(0, index=productos, columns=meses)
+    # Construir un DataFrame de simulaciones
+    demanda_productos = pd.DataFrame({(producto, mes): (np.random.uniform(
+        low=(demanda_grupos[(grupo := df_productos.loc[producto, 'grupo']), mes] * df_productos.loc[producto, 'fraccion'] * 0.9),
+        high=(demanda_grupos[grupo, mes] * df_productos.loc[producto, 'fraccion'] * 1.1),
+        size=num_sims)) for producto in productos for mes in meses})
 
-    for grupo in grupos:
-        productos_grupo = df_productos[df_productos['grupo'] == grupo].index
-        
-        for producto in productos_grupo:
-            fraccion = df_productos.loc[producto, 'fraccion']
-            
-            for mes in meses:
-                nivel_base = demanda_grupos_base.loc[grupo, mes] * fraccion
-                nivel_pos  = demanda_grupos_pos.loc[grupo, mes]  * fraccion
-                nivel_neg  = demanda_grupos_neg.loc[grupo, mes]  * fraccion
-                
-                demanda_productos_base.loc[producto, mes] = np.random.uniform(low=nivel_base*0.9, high=nivel_base*1.1, size=num_sims).mean()
-                demanda_productos_pos.loc[producto, mes] = np.random.uniform(low=nivel_pos*0.9, high=nivel_pos*1.2, size=num_sims).mean()
-                demanda_productos_neg.loc[producto, mes] = np.random.uniform(low=nivel_neg*0.8, high=nivel_neg*1.1, size=num_sims).mean()
-
-    return demanda_productos_base, demanda_productos_pos, demanda_productos_neg
+    return demanda_productos
