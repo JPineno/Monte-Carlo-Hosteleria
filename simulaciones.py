@@ -3,12 +3,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Funciones para leer los datos desde el archivo Excel
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Funciones para leer los datos desde archivos Excel
 def leer_excel_ventas(ruta_excel='datos/ventas_grupos_productos_costes.xlsx'):
     """
     Lee los datos desde el archivo Excel preparado para las ventas del año,
     y devuelve un DataFrame con los datos en cada mes del año.
     """
     df = pd.read_excel(ruta_excel, sheet_name='ventas', index_col=0)
+
+    # Eliminar los meses que no tienen datos
+    df = df.dropna(axis=0, how="all")
     return df
 
 def leer_excel_grupos(ruta_excel='datos/ventas_grupos_productos_costes.xlsx'):
@@ -17,6 +25,9 @@ def leer_excel_grupos(ruta_excel='datos/ventas_grupos_productos_costes.xlsx'):
     y devuelve un DataFrame con el nivel de demanda de cada grupo en cada mes del año.
     """
     df = pd.read_excel(ruta_excel, sheet_name='grupos', index_col=0)
+
+    # Eliminar los meses que no tienen datos
+    df = df.dropna(axis=1, how="all")
     return df
 
 def leer_excel_productos(ruta_excel='datos/ventas_grupos_productos_costes.xlsx'):
@@ -37,6 +48,9 @@ def leer_excel_costes(ruta_excel='datos/ventas_grupos_productos_costes.xlsx'):
     y devuelve un DataFrame con el total de cada coste en cada mes del año.
     """
     df = pd.read_excel(ruta_excel, sheet_name='costes', index_col=0)
+
+    # Eliminar los meses que no tienen datos
+    df = df.dropna(axis=1, how="all")
     return df
 
 # Función para simular la demanda de cada grupo de productos
