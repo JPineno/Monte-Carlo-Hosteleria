@@ -95,6 +95,9 @@ def simular_demanda_productos(num_sims=1000000):
     - demanda_productos: un DataFrame con la demanda simulada de cada producto en
     cada mes, partiendo de las simulaciones de demanda de los grupos establecidas
     en la función "simular_demanda_grupos", y con el número de simulaciones establecido.
+    - df_productos: un DataFrame con la información de la página del Excel dedicada
+    a los productos, pero con una columna adicional que refleja el peso de cada producto
+    en la demanda total.
     """
     df_productos = leer_excel_productos()
     meses = leer_excel_grupos().columns
@@ -113,4 +116,4 @@ def simular_demanda_productos(num_sims=1000000):
         high=(demanda_grupos[grupo, mes] * df_productos.loc[producto, 'fraccion'] * 1.1),
         size=num_sims)) for producto in productos for mes in meses})
 
-    return demanda_productos
+    return demanda_productos, df_productos
