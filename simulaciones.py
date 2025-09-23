@@ -93,8 +93,8 @@ def simular_demanda_productos(num_sims=1000000):
     
     Devuelve:
     - demanda_productos: un DataFrame con la demanda simulada de cada producto en
-    cada mes, partiendo del nivel de demanda establecido en el documento de Excel,
-    y con el número de simulaciones establecido.
+    cada mes, partiendo de las simulaciones de demanda de los grupos establecidas
+    en la función "simular_demanda_grupos", y con el número de simulaciones establecido.
     """
     df_productos = leer_excel_productos()
     meses = leer_excel_grupos().columns
