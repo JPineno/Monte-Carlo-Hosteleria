@@ -117,3 +117,37 @@ def simular_demanda_productos(num_sims=1000000):
         size=num_sims)) for producto in productos for mes in meses})
 
     return demanda_productos, df_productos
+
+# Función para obtener los ingresos y las ventas mensuales por producto,
+# partiendo de los datos de ingresos y precios del Excel, y de
+# las suposiciones de demanda por cada producto, para sacar las unidades vendidas
+def obtener_ventas_productos():
+    """
+    Simula las ventas de cada producto en cada mes del año.
+    
+    Parámetros:
+    - num_sims: número de simulaciones a realizar para cada producto en cada mes.
+    
+    Devuelve:
+    - ingresos_productos: un DataFrame con los ingresos generados por cada producto
+    en cada mes, dados los datos de ventas en el Excel, los pesos de cada
+    producto sobre el total estimados en "simular_demanda_productos", y los
+    precios de cada producto.
+    - ventas_productos: un DataFrame con las ventas de cada producto
+    en cada mes, dados los datos de ventas en el Excel, los pesos de cada
+    producto sobre el total estimados en "simular_demanda_productos", y los
+    precios de cada producto.
+    """
+    df_productos = simular_demanda_productos()[1]
+    meses = leer_excel_ventas().index
+    ventas_totales = leer_excel_ventas()['ventas_totales']
+    pesos = df_productos['fraccion']
+    precios = df_productos['precio']
+
+    # Sacar la parte de los ingresos generada por cada producto, según su peso
+    ingresos_productos = pd.DataFrame({mes: ventas_totales.loc[mes] * pesos for mes in meses}, index=pesos.index)
+
+    # Obtener las ventas de cada producto, dividiendo los ingresos entre el precio
+    ventas_productos = ingresos_productos.div(precios, axis=0)
+
+    return ingresos_productos, ventas_productos
