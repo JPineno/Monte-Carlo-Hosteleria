@@ -143,3 +143,23 @@ def obtener_ventas_productos():
     ventas_productos = ingresos_productos.div(precios, axis=0)
 
     return ingresos_productos, ventas_productos
+
+# Función para obtener los ingresos totales mensuales,
+# partiendo de los datos de ventas obtenidos anteriormente
+def obtener_ingresos_mensuales():
+    """
+    Agrega los ingresos de cada producto en cada mes del año, para
+    obtener los ingesos totales, y ver cómo se comparan con los
+    ingresos totales observados (para comprobar las estimaciones de demanda).
+    
+    Devuelve:
+    - ingresos_simulados: una Serie con los ingresos mensuales,
+    simulados a partir de las estimaciones generadas con "obtener_ventas_productos()".
+    """
+    ingresos_prod = obtener_ventas_productos()[0]
+    meses = ingresos_prod.columns
+
+    # Sumar los ingresos de cada producto en cada mes
+    ingresos_simulados = pd.Series({mes: ingresos_prod[mes].sum() for mes in meses}, index=meses)
+
+    return ingresos_simulados
