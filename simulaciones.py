@@ -246,3 +246,31 @@ def simular_costes_indirectos(num_sims=1000000):
                                                                           size=num_sims) for coste in costes for mes in meses})
             
     return sim_costes_indirectos
+
+# Función para simular los
+# beneficios en cada mes del año
+def simular_beneficios_mensuales():
+    """
+    Simula los beneficios totales en cada mes.
+    
+    Devuelve:
+    - sim_beneficios_totales: un DataFrame con los beneficios totales en
+    cada mes, partiendo de las simulaciones de ventas y costes obtenidas en
+    "simular_ventas_productos", "simular_costes_unitarios" y "simular_costes_indirectos"
+    respectivamente, y los precios indicados en el Excel.
+    """
+    sim_ventas = simular_ventas_productos()[0]
+    sim_costes = simular_costes_unitarios()
+    ind_costes = simular_costes_indirectos().swaplevel(axis=1).groupby(level=0, axis=1, sort=False).sum()
+    precios = leer_excel_productos()['precio']
+    productos = leer_excel_productos().index
+    meses = leer_excel_ventas().index
+
+    # Construir un DataFrame de simulaciones para cada producto y mes
+    sim_beneficios_productos = pd.DataFrame({(mes, producto): (sim_ventas[producto, mes] * precios[producto] - sim_ventas[producto, mes] * sim_costes[producto])
+                                             for producto in productos for mes in meses})
+
+    # Construir un Dataframe de simulaciones para cada mes, y restar los costes indirectos
+    sim_beneficios_totales = sim_beneficios_productos.groupby(level=0, axis=1, sort=False).sum() - ind_costes
+
+    return sim_beneficios_totales
