@@ -40,7 +40,7 @@ def leer_excel_productos(ruta_excel='datos/ventas_grupos_productos_costes.xlsx')
 
 def leer_excel_costes(ruta_excel='datos/ventas_grupos_productos_costes.xlsx'):
     """
-    Lee los datos desde el archivo Excel preparado para los costes,
+    Lee los datos desde el archivo Excel preparado para los costes indirectos,
     y devuelve un DataFrame con el total de cada coste en cada mes del año.
     """
     df = pd.read_excel(ruta_excel, sheet_name='costes', index_col=0)
@@ -199,3 +199,27 @@ def simular_ventas_productos():
                                          for producto in productos for mes in meses})
 
     return sim_ventas_productos, sim_ingresos_productos
+
+# Función para simular variaciones en los
+# costes indirectos en cada mes del año
+def simular_costes_indirectos(num_sims=1000000):
+    """
+    Simula los costes indirectos en cada mes del año.
+
+    Parámetros:
+    - num_sims: número de simulaciones a realizar para cada coste en cada mes.
+    
+    Devuelve:
+    - sim_costes_indirectos: un DataFrame con los costes indirectos simulados en
+    cada mes, partiendo de los datos obtenidos del Excel.
+    """
+    df_costes = leer_excel_costes()
+    meses = df_costes.columns
+    costes = df_costes.index
+    
+    # Construir un DataFrame de simulaciones
+    sim_costes_indirectos = pd.DataFrame({(coste, mes): np.random.uniform(low=df_costes.loc[coste, mes]*0.5,
+                                                                          high=df_costes.loc[coste, mes]*1.5,
+                                                                          size=num_sims) for coste in costes for mes in meses})
+            
+    return sim_costes_indirectos
