@@ -97,7 +97,6 @@ def simular_demanda_productos(num_sims=1000000):
     df_productos = leer_excel_productos()
     meses = leer_excel_grupos().columns
     productos = df_productos.index
-    grupos = df_productos['grupo'].unique()
 
     # Obtener la demanda de cada grupo
     demanda_grupos = simular_demanda_grupos(num_sims=num_sims)
@@ -118,7 +117,7 @@ def simular_demanda_productos(num_sims=1000000):
 # las suposiciones de demanda por cada producto, para sacar las unidades vendidas
 def obtener_ventas_productos():
     """
-    Simula las ventas de cada producto en cada mes del año.
+    Obtiene las ventas de cada producto en cada mes del año.
     
     Devuelve:
     - ingresos_productos: un DataFrame con los ingresos generados por cada producto
