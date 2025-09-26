@@ -118,7 +118,7 @@ def simular_demanda_productos(num_sims=1000000):
 # las suposiciones de demanda por cada producto, para sacar las unidades vendidas
 def obtener_ventas_productos():
     """
-    Obtiene las ventas de cada producto en cada mes del año.
+    Estima las ventas de cada producto en cada mes del año.
     
     Devuelve:
     - ingresos_productos: un DataFrame con los ingresos generados por cada producto
@@ -154,9 +154,9 @@ def obtener_ingresos_beneficios_mensuales():
     
     Devuelve:
     - ingresos_simulados: una Serie con los ingresos totales mensuales,
-    simulados a partir de las estimaciones generadas con "obtener_ventas_productos()".
+    estimados a partir de los resultados generados con "obtener_ventas_productos()".
     - beneficios_simulados: una Serie con los beneficios totales mensuales,
-    simulados a partir de las estimaciones generadas con "obtener_ventas_productos()".
+    estimados a partir de los resultados generados con "obtener_ventas_productos()".
     """
     ingresos_prod, ventas_prod = obtener_ventas_productos()
     beneficios_ud = leer_excel_productos()['precio'] - leer_excel_productos()['coste_unitario']
@@ -199,6 +199,29 @@ def simular_ventas_productos():
                                          for producto in productos for mes in meses})
 
     return sim_ventas_productos, sim_ingresos_productos
+
+# Función para simular la posible variación en costes unitarios
+# de cada producto
+def simular_costes_unitarios(num_sims=1000000):
+    """
+    Simula los costes unitarios de cada producto.
+    
+    Parámetros:
+    - num_sims: número de simulaciones a realizar para cada producto.
+    
+    Devuelve:
+    - costes_ud_productos: un DataFrame con los costes unitarios simulados para cada productos,
+    partiendo de los datos obtenidos en el Excel.
+    """
+    costes = leer_excel_productos()['coste_unitario']
+    productos = costes.index
+
+    # Construir un DataFrame de simulaciones
+    costes_ud_productos = pd.DataFrame({producto: np.random.uniform(low=costes[producto]*0.5,
+                                                                    high=costes[producto]*1.5,
+                                                                    size=num_sims) for producto in productos})
+
+    return costes_ud_productos
 
 # Función para simular variaciones en los
 # costes indirectos en cada mes del año
