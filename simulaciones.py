@@ -144,22 +144,28 @@ def obtener_ventas_productos():
 
     return ingresos_productos, ventas_productos
 
-# Función para obtener los ingresos totales mensuales,
+# Función para obtener los ingresos y beneficios totales mensuales,
 # partiendo de los datos de ventas obtenidos anteriormente
-def obtener_ingresos_mensuales():
+def obtener_ingresos_beneficios_mensuales():
     """
-    Agrega los ingresos de cada producto en cada mes del año, para
-    obtener los ingesos totales, y ver cómo se comparan con los
-    ingresos totales observados (para comprobar las estimaciones de demanda).
+    Agrega los ingresos y beneficios unitarios de cada producto en cada mes del año, para
+    obtener los ingesos y beneficios unitarios totales, y poder ver cómo se comparan con los
+    datos reales observados (para comprobar las estimaciones de demanda).
     
     Devuelve:
-    - ingresos_simulados: una Serie con los ingresos mensuales,
+    - ingresos_simulados: una Serie con los ingresos totales mensuales,
+    simulados a partir de las estimaciones generadas con "obtener_ventas_productos()".
+    - beneficios_simulados: una Serie con los beneficios totales mensuales,
     simulados a partir de las estimaciones generadas con "obtener_ventas_productos()".
     """
-    ingresos_prod = obtener_ventas_productos()[0]
+    ingresos_prod, ventas_prod = obtener_ventas_productos()
+    beneficios_ud = leer_excel_productos()['precio'] - leer_excel_productos()['coste_unitario']
     meses = ingresos_prod.columns
 
     # Sumar los ingresos de cada producto en cada mes
-    ingresos_simulados = pd.Series({mes: ingresos_prod[mes].sum() for mes in meses}, index=meses)
+    ingresos_simulados = pd.Series({mes: ingresos_prod[mes].sum() for mes in meses})
 
-    return ingresos_simulados
+    # Obtener los beneficios unitarios totales en cada mes
+    beneficios_simulados = pd.Series({mes: (beneficios_ud * ventas_prod[mes]).sum() for mes in meses})
+
+    return ingresos_simulados, beneficios_simulados
