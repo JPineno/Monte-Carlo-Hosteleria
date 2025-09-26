@@ -59,6 +59,9 @@ def simular_demanda_grupos(num_sims=1000000):
     - num_sims: número de simulaciones a realizar para cada grupo en cada mes.
     
     Devuelve:
+    - fraccion_grupos: un DataFrame con las fracciones de demanda de cada grupo en
+    cada mes sobre el total de ese mes, partiendo del nivel de demanda establecido en
+    el documento de Excel.
     - demanda_grupos: un DataFrame con la demanda simulada de cada grupo en
     cada mes, partiendo del nivel de demanda establecido en el documento de Excel,
     y con el número de simulaciones establecido.
@@ -75,7 +78,7 @@ def simular_demanda_grupos(num_sims=1000000):
                                     high=fraccion_grupos.loc[grupo, mes]*1.5,
                                     size=num_sims) for grupo in grupos for mes in meses})
             
-    return demanda_grupos
+    return fraccion_grupos, demanda_grupos
 
 # Función para simular la demanda de cada producto
 # en cada mes del año
@@ -98,8 +101,8 @@ def simular_demanda_productos(num_sims=1000000):
     meses = leer_excel_grupos().columns
     productos = df_productos.index
 
-    # Obtener la demanda de cada grupo
-    demanda_grupos = simular_demanda_grupos(num_sims=num_sims)
+    # Obtener la demanda simulada de cada grupo
+    demanda_grupos = simular_demanda_grupos()[1]
 
     # Sacar el peso de cada producto dentro de su grupo
     df_productos['fraccion'] = (df_productos.groupby('grupo')['nivel_demanda_dentro_de_grupo'].transform(lambda x: x / x.sum()))
@@ -253,6 +256,10 @@ def simular_beneficios_mensuales():
     Simula los beneficios totales en cada mes.
     
     Devuelve:
+    - sim_beneficios_productos: un DataFrame con los beneficios unitarios por producto en
+    cada mes, partiendo de las simulaciones de ventas y costes obtenidas en
+    "simular_ventas_productos" y "simular_costes_unitarios" respectivamente, y los precios
+    indicados en el Excel.
     - sim_beneficios_totales: un DataFrame con los beneficios totales en
     cada mes, partiendo de las simulaciones de ventas y costes obtenidas en
     "simular_ventas_productos", "simular_costes_unitarios" y "simular_costes_indirectos"
@@ -272,4 +279,4 @@ def simular_beneficios_mensuales():
     # Construir un Dataframe de simulaciones para cada mes, y restar los costes indirectos
     sim_beneficios_totales = sim_beneficios_productos.groupby(level=0, axis=1, sort=False).sum() - ind_costes
 
-    return sim_beneficios_totales
+    return sim_beneficios_productos.swaplevel(axis=1), sim_beneficios_totales
