@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 # Funciones para leer los datos desde archivos Excel
 def leer_excel_ventas(ruta_excel='datos/ventas_grupos_productos_costes.xlsx'):
