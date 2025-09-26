@@ -31,7 +31,8 @@ def leer_excel_productos(ruta_excel='datos/ventas_grupos_productos_costes.xlsx')
     y devuelve un DataFrame con:
     - 'Producto'
     - 'Grupo'
-    - 'Beneficio unitario'
+    - 'Coste unitario'
+    - 'Precio'
     - 'Nivel de demanda dentro del grupo'
     """
     df = pd.read_excel(ruta_excel, sheet_name='productos', index_col=0)
@@ -83,7 +84,7 @@ def simular_demanda_productos(num_sims=1000000):
     """
     Simula la demanda (en porcentaje del total) de cada producto en cada mes del año.
     
-     Parámetros:
+    Parámetros:
     - num_sims: número de simulaciones a realizar para cada producto en cada mes.
     
     Devuelve:
@@ -168,3 +169,33 @@ def obtener_ingresos_beneficios_mensuales():
     beneficios_simulados = pd.Series({mes: (beneficios_ud * ventas_prod[mes]).sum() for mes in meses})
 
     return ingresos_simulados, beneficios_simulados
+
+# Función para simular las ventas y los ingresos
+# de cada producto en cada mes del año
+def simular_ventas_productos():
+    """
+    Simula las ventas y los ingresos de cada producto en cada mes del año.
+    
+    Devuelve:
+    - sim_ventas_productos: un DataFrame con las ventas por producto simuladas en
+    cada mes, partiendo de las variaciones en la demanda obtenidas en
+    "simular_demanda_productos".
+    - sim_ingresos_productos: un DataFrame con los ingresos por producto, simulados en
+    cada mes, partiendo de las ventas simuladas en esta función y el precio de los
+    productos.
+    """
+    sim_demanda_productos = simular_demanda_productos()[0]
+    precios = leer_excel_productos()['precio']
+    ventas = obtener_ventas_productos()[1]
+    productos = ventas.index
+    meses = ventas.columns
+
+    # Simular las ventas de cada producto partiendo de las simulaciones de demanda
+    sim_ventas_productos = pd.DataFrame({(producto, mes): (sim_demanda_productos[producto, mes] * ventas.loc[producto, mes])
+                                         for producto in productos for mes in meses})
+
+    # Simular los ingresos de cada producto partiendo de las simulaciones de ventas
+    sim_ingresos_productos = pd.DataFrame({(producto, mes): (sim_ventas_productos[producto, mes] * precios[producto])
+                                         for producto in productos for mes in meses})
+
+    return sim_ventas_productos, sim_ingresos_productos
