@@ -52,19 +52,19 @@ def leer_excel_costes(ruta_excel='datos/ventas_grupos_productos_costes.xlsx'):
 # en cada mes del año
 def simular_demanda_grupos(num_sims=1000000):
     """
-    Simula la demanda (en porcentaje del total) de cada grupo de productos en cada mes del año, utilizando
+    Simula la demanda (en porcentaje) de cada grupo de productos en cada mes del año, utilizando
     distribuciones uniformes que parten del nivel de demanda establecido en el Excel.
     
     Parámetros:
     - num_sims: número de simulaciones a realizar para cada grupo en cada mes.
     
     Devuelve:
-    - fraccion_grupos: un DataFrame con las fracciones de demanda de cada grupo en
-    cada mes sobre el total de ese mes, partiendo del nivel de demanda establecido en
-    el documento de Excel.
     - demanda_grupos: un DataFrame con la demanda simulada de cada grupo en
     cada mes, partiendo del nivel de demanda establecido en el documento de Excel,
     y con el número de simulaciones establecido.
+    - fraccion_grupos: un DataFrame con las fracciones de ventas de cada grupo sobre
+    el total en cada mes, partiendo del nivel de demanda establecido en
+    el documento de Excel.
     """
     df_grupos = leer_excel_grupos()
     meses = df_grupos.columns
@@ -78,7 +78,7 @@ def simular_demanda_grupos(num_sims=1000000):
                                     high=fraccion_grupos.loc[grupo, mes]*1.5,
                                     size=num_sims) for grupo in grupos for mes in meses})
             
-    return fraccion_grupos, demanda_grupos
+    return demanda_grupos, fraccion_grupos
 
 # Función para simular la demanda de cada producto
 # en cada mes del año
@@ -134,7 +134,7 @@ def obtener_ventas_productos():
     """
     df_productos = simular_demanda_productos()[1]
     meses = leer_excel_ventas().index
-    ventas_totales = leer_excel_ventas()['ventas_totales']
+    ventas_totales = leer_excel_ventas()['ingresos_totales']
     pesos = df_productos['fraccion']
     precios = df_productos['precio']
 
@@ -155,22 +155,23 @@ def obtener_ingresos_beneficios_mensuales():
     datos reales observados (para comprobar las estimaciones de demanda).
     
     Devuelve:
-    - ingresos_simulados: una Serie con los ingresos totales mensuales,
+    - ingresos_estimados: una Serie con los ingresos totales mensuales,
     estimados a partir de los resultados generados con "obtener_ventas_productos()".
-    - beneficios_simulados: una Serie con los beneficios totales mensuales,
+    - beneficios_estimados: una Serie con los beneficios totales mensuales,
     estimados a partir de los resultados generados con "obtener_ventas_productos()".
     """
     ingresos_prod, ventas_prod = obtener_ventas_productos()
     beneficios_ud = leer_excel_productos()['precio'] - leer_excel_productos()['coste_unitario']
     meses = ingresos_prod.columns
+    costes_ind = leer_excel_costes().sum()
 
     # Sumar los ingresos de cada producto en cada mes
-    ingresos_simulados = pd.Series({mes: ingresos_prod[mes].sum() for mes in meses})
+    ingresos_estimados = pd.Series({mes: ingresos_prod[mes].sum() for mes in meses})
 
     # Obtener los beneficios unitarios totales en cada mes
-    beneficios_simulados = pd.Series({mes: (beneficios_ud * ventas_prod[mes]).sum() for mes in meses})
+    beneficios_estimados = pd.Series({mes: (beneficios_ud * ventas_prod[mes]).sum() - costes_ind[mes] for mes in meses})
 
-    return ingresos_simulados, beneficios_simulados
+    return ingresos_estimados, beneficios_estimados
 
 # Función para simular las ventas y los ingresos
 # de cada producto en cada mes del año
