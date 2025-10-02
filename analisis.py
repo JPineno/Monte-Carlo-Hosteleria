@@ -54,7 +54,7 @@ fraccion_productos_std = fracciones_prod.std(axis=0).unstack(level=1, sort=False
 beneficios_productos_media = benef_prod.mean(axis=0).unstack(level=1, sort=False)
 beneficios_productos_std = benef_prod.std(axis=0).unstack(level=1, sort=False)
 
-# Realizar las gráficas necesarias para el reporte
+# Realizar las gráficas
 
 # Comparar los ingresos mensuales reales reflejados en el Excel y los ingresos
 # que obtendríamos a partir de las estimaciones de demanda asumidas por el usuario
